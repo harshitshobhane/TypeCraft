@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Typing Spell Shooter - Power Mode</title>
+  <title></title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
       font-family: 'Courier New', monospace;
+      background: radial-gradient(circle at center, #0f0f0f 0%, #1a1a1a 100%);
       color: white;
     }
 
@@ -20,16 +20,24 @@
       position: absolute;
       top: 20px;
       left: 20px;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.8);
       padding: 15px 20px;
       border-radius: 12px;
       font-size: 18px;
-      box-shadow: 0 0 10px lime;
+      box-shadow: 0 0 12px #00ff99;
+      border: 1px solid #00ff99;
     }
 
-    .bar-label {
-      font-size: 14px;
-      margin-bottom: 4px;
+    #comboDisplay {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2em;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
     }
 
     #game-over {
@@ -58,7 +66,9 @@
 <div id="ui">
   <div>🎯 Score: <span id="score">0</span></div>
   <div>🚀 Level: <span id="level">1</span></div>
+  <div>⚡ WPM: <span id="wpm">0</span></div>
 </div>
+<div id="comboDisplay"></div>
 <canvas id="gameCanvas"></canvas>
 <div id="game-over">💀 Game Over<br><button onclick="location.reload()">Restart</button></div>
 
@@ -78,9 +88,19 @@ let score = 0;
 let level = 1;
 let playerHP = 100;
 let enemyHP = 100;
-let wordSpeedBase = 1.5;
+let wordSpeedBase = 2;
+let combo = 0;
+let wordsTyped = 0;
+let startTime = Date.now();
+let bgOffset = 0;
+let enemyFlashTimer = 0;
 
-// Word class
+// Star background
+let stars = [];
+for (let i = 0; i < 100; i++) {
+  stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2 });
+}
+
 class Word {
   constructor(text, x, y, speed) {
     this.text = text;
@@ -91,10 +111,10 @@ class Word {
 
   draw() {
     ctx.fillStyle = 'white';
-    ctx.font = '24px monospace';
+    ctx.font = '26px monospace';
     ctx.fillText(this.text, this.x, this.y);
     if (currentWord === this) {
-      ctx.fillStyle = 'lime';
+      ctx.fillStyle = 'cyan';
       ctx.fillText(this.text.substring(0, typedIndex), this.x, this.y);
     }
   }
@@ -103,17 +123,21 @@ class Word {
     this.x -= this.speed;
     if (this.x <= 80) {
       activeWords = activeWords.filter(w => w !== this);
-      playerHP -= 10;
+      playerHP -= 10 + level; // Increased damage as level rises
+      combo = 0;
+      updateComboDisplay();
       if (playerHP <= 0) endGame();
     }
   }
 }
 
 class Projectile {
-  constructor(x, y) {
+  constructor(x, y, color) {
     this.x = x;
     this.y = y;
-    this.speed = 20;
+    this.color = color;
+    this.speed = 25;
+    this.radius = 6;
   }
 
   update() {
@@ -122,17 +146,20 @@ class Projectile {
 
   draw() {
     ctx.beginPath();
-    ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
-    ctx.fillStyle = 'lime';
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 15;
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
 }
 
 function spawnWord() {
   const text = wordList[Math.floor(Math.random() * wordList.length)];
-  const y = 100 + Math.random() * (canvas.height - 200);
+  const y = canvas.height - 120;
   const x = canvas.width - 80;
-  const speed = wordSpeedBase + Math.random();
+  const speed = wordSpeedBase + Math.random() * 0.5;
   activeWords.push(new Word(text, x, y, speed));
 }
 setInterval(spawnWord, 2000);
@@ -147,19 +174,59 @@ function drawHealthBar(x, y, width, height, value, color, label) {
   ctx.fillText(label, x, y - 4);
 }
 
+function updateComboDisplay() {
+  const comboDisplay = document.getElementById('comboDisplay');
+  if (combo > 0) {
+    comboDisplay.innerText = `🔥 Combo x${combo}`;
+    comboDisplay.style.opacity = 1;
+    setTimeout(() => {
+      comboDisplay.style.opacity = 0;
+    }, 1000);
+  }
+}
+
+function updateWPM() {
+  const elapsed = (Date.now() - startTime) / 60000;
+  const wpm = Math.round(wordsTyped / elapsed);
+  document.getElementById('wpm').innerText = wpm;
+}
+
+function drawStars() {
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'white';
+  for (let s of stars) {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+    s.x -= 0.5;
+    if (s.x < 0) s.x = canvas.width;
+  }
+}
+
 function gameLoop() {
   if (gameOver) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Red enemy block
-  ctx.fillStyle = 'red';
-  ctx.fillRect(canvas.width - 80, canvas.height / 2 - 60, 60, 120);
-  drawHealthBar(canvas.width - 140, canvas.height / 2 - 80, 100, 10, enemyHP, 'red', 'ENEMY');
+  drawStars();
 
-  // Green player block
-  ctx.fillStyle = 'green';
-  ctx.fillRect(20, canvas.height / 2 - 40, 40, 80);
-  drawHealthBar(20, canvas.height / 2 - 60, 100, 10, playerHP, 'lime', 'YOU');
+  // Scrolling ground like Dino game
+  bgOffset -= 4;
+  if (bgOffset <= -40) bgOffset = 0;
+  for (let i = 0; i < canvas.width / 40 + 2; i++) {
+    ctx.fillStyle = '#333';
+    ctx.fillRect(bgOffset + i * 40, canvas.height - 40, 40, 40);
+  }
+
+  // Enemy
+  ctx.fillStyle = enemyFlashTimer > 0 ? 'white' : 'red';
+  ctx.fillRect(canvas.width - 80, canvas.height - 160, 60, 60);
+  drawHealthBar(canvas.width - 140, canvas.height - 180, 100, 10, enemyHP, 'red', 'ENEMY');
+  if (enemyFlashTimer > 0) enemyFlashTimer--;
+
+  // Player
+  ctx.fillStyle = 'lime';
+  ctx.fillRect(20, canvas.height - 160, 60, 60);
+  drawHealthBar(20, canvas.height - 180, 100, 10, playerHP, 'lime', 'YOU');
 
   activeWords.forEach(word => {
     word.update();
@@ -171,8 +238,8 @@ function gameLoop() {
     p.draw();
   });
 
-  // Word collision is now only for visuals
   projectiles = projectiles.filter(p => p.x < canvas.width);
+  updateWPM();
 
   requestAnimationFrame(gameLoop);
 }
@@ -180,7 +247,7 @@ function gameLoop() {
 function levelUp() {
   level++;
   wordSpeedBase += 0.5;
-  enemyHP = 100;
+  enemyHP = 100 + level * 5; // Stronger enemy
   document.getElementById('level').innerText = level;
 }
 
@@ -192,7 +259,6 @@ function endGame() {
 window.addEventListener('keydown', e => {
   if (gameOver) return;
   const key = e.key;
-
   if (!currentWord) {
     for (let word of activeWords) {
       if (word.text[0] === key) {
@@ -203,14 +269,20 @@ window.addEventListener('keydown', e => {
     }
   } else if (currentWord.text[typedIndex] === key) {
     typedIndex++;
-    projectiles.push(new Projectile(60, canvas.height / 2));
+    const color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+    projectiles.push(new Projectile(80, canvas.height - 130, color));
 
     if (typedIndex >= currentWord.text.length) {
-      // Destroyed a word
       activeWords = activeWords.filter(w => w !== currentWord);
-      enemyHP -= 10;
-      score++;
+      combo++;
+      updateComboDisplay();
+      wordsTyped++;
+      let points = 1 + combo - 1;
+      score += points;
       document.getElementById('score').innerText = score;
+      enemyHP -= 10 + level;
+      enemyFlashTimer = 5;
+
       if (enemyHP <= 0) levelUp();
       currentWord = null;
       typedIndex = 0;
