@@ -319,35 +319,41 @@ window.addEventListener('keydown', e => {
         return;
       }
     }
-  } else if (currentWord.text[typedIndex] === key) {
+  } else {
+  if (currentWord.text[typedIndex] === key) {
     typedIndex++;
     const color = `hsl(${Math.random() * 360}, 100%, 50%)`;
     projectiles.push(new Projectile(80, canvas.height - 130, color));
 
     if (typedIndex >= currentWord.text.length) {
-  activeWords = activeWords.filter(w => w !== currentWord);
-  combo++;
-  updateComboDisplay();
-  wordsTyped++;
-  let points = 1 + combo - 1;
-  score += points;
-  document.getElementById('score').innerText = score;
-  
-  if (currentWord.isHealing) {
-    playerHP = Math.min(100, playerHP + 20); // heal if it's a healing word
+      activeWords = activeWords.filter(w => w !== currentWord);
+      combo++;
+      updateComboDisplay();
+      wordsTyped++;
+      let points = 1 + combo - 1;
+      score += points;
+      document.getElementById('score').innerText = score;
+      
+      if (currentWord.isHealing) {
+        playerHP = Math.min(100, playerHP + 20);
+      } else {
+        enemyHP -= 10 + level;
+        enemyFlashTimer = 5;
+        if (enemyHP <= 0) levelUp();
+      }
+
+      currentWord = null;
+      typedIndex = 0;
+    }
   } else {
-    enemyHP -= 10 + level;
-    enemyFlashTimer = 5;
-    if (enemyHP <= 0) levelUp();
+    // ❌ Wrong key pressed!
+    combo = 0;
+    updateComboDisplay();
+    currentWord = null;
+    typedIndex = 0;
   }
-
-  currentWord = null;
-  typedIndex = 0;
 }
-
-  }
 });
-
 gameLoop();
 </script>
 </body>
