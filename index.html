@@ -119,6 +119,15 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const wordList = ['fire', 'ice', 'storm', 'rune', 'portal', 'spell', 'magic', 'dark', 'light', 'burn', 'time', 'zap', 'chaos', 'nova'];
+// Load your custom background
+const bgImage = new Image();
+bgImage.src = 'background.png';
+const characterImg = new Image();
+characterImg.src = 'character.png';
+const enemyImg = new Image();
+enemyImg.src   = 'character2.png';
+
+
 let activeWords = [];
 let projectiles = [];
 let powerups = [];
@@ -237,44 +246,45 @@ function updateWPM() {
   document.getElementById('wpm').innerText = wpm;
 }
 
-function drawStars() {
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'white';
-  for (let s of stars) {
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-    ctx.fill();
-    s.x -= 0.5;
-    if (s.x < 0) s.x = canvas.width;
-  }
-}
 
 function gameLoop() {
   if (gameOver) return;
-  drawStars();
+    // draw full-canvas background image
+    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    bgOffset -= 4;
 
-  bgOffset -= 4;
   if (bgOffset <= -40) bgOffset = 0;
   for (let i = 0; i < canvas.width / 40 + 2; i++) {
     ctx.fillStyle = '#333';
     ctx.fillRect(bgOffset + i * 40, canvas.height - 40, 40, 40);
   }
 
-  ctx.fillStyle = enemyFlashTimer > 0 ? 'white' : 'red';
-  ctx.fillRect(canvas.width - 80, canvas.height - 160, 60, 60);
+  // draw enemy sprite (flash to white if hit)
+if (enemyFlashTimer > 0) {
+  // optional flash effect: tint white overlay
+  ctx.globalAlpha = 0.7;
+  ctx.drawImage(enemyImg, canvas.width - 80, canvas.height - 319, 275, 300);
+  ctx.globalAlpha = 1;
+} else {
+  ctx.drawImage(enemyImg, canvas.width - 250, canvas.height - 319, 265, 300);
+}
+
   drawHealthBar(canvas.width - 140, canvas.height - 180, 100, 10, enemyHP, 'red', 'ENEMY');
   if (enemyFlashTimer > 0) enemyFlashTimer--;
 
-  ctx.fillStyle = 'lime';
-  ctx.fillRect(20, canvas.height - 160, 60, 60);
-  drawHealthBar(20, canvas.height - 180, 100, 10, playerHP, 'lime', 'YOU');
-
+// draw character sprite at player's position
+ctx.drawImage(characterImg, 20, canvas.height - 319, 255, 300);
+drawHealthBar(20, canvas.height - 180, 100, 10, playerHP, 'lime', 'YOU');
   activeWords.forEach(word => {
     word.update();
     word.draw();
   });
-
+  let loaded = 0;
+[bgImage, characterImg, enemyImg].forEach(img =>
+  img.onload = () => {
+    if (++loaded === 3) gameLoop();
+  }
+);
   powerups.forEach(p => {
     p.update();
     p.draw();
