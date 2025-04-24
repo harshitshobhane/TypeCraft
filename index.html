@@ -126,6 +126,8 @@ const characterImg = new Image();
 characterImg.src = 'character.png';
 const enemyImg = new Image();
 enemyImg.src   = 'character2.png';
+const slashImg = new Image();
+slashImg.src   = 'slash.png';
 
 
 let activeWords = [];
@@ -149,6 +151,9 @@ let stars = [];
 for (let i = 0; i < 100; i++) {
   stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2 });
 }
+
+
+
 
 class Word {
   constructor(text, x, y, speed, isHealing = false) {
@@ -185,27 +190,27 @@ class Word {
 
 
 class Projectile {
-  constructor(x, y, color) {
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    this.speed = 25;
-    this.radius = 6;
-  }
-  update() {
-    this.x += this.speed;
-  }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = 15;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-}
-
+      constructor(x, y, img, w, h, damage) {
+        this.x      = x; this.y = y;
+        this.img    = img;
+        this.w      = w; this.h = h;
+        this.speed  = 25;
+        this.damage = damage;
+        this.hit    = false;
+      }
+      update() {
+        this.x += this.speed;
+        if (!this.hit && this.x >= canvas.width - 80) {
+          this.hit = true;
+          enemyFlashTimer = 5;
+          enemyHP -= this.damage;
+          if (enemyHP <= 0) levelUp();
+        }
+      }
+      draw() {
+        ctx.drawImage(this.img, this.x, this.y, this.w, this.h);
+      }
+    }
 
 
 function spawnWord() {
@@ -249,54 +254,50 @@ function updateWPM() {
 
 function gameLoop() {
   if (gameOver) return;
-    // draw full-canvas background image
-    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-    bgOffset -= 4;
 
+  // 1) background
+  ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+  // 2) ground tiles (if you still want them)
+  bgOffset -= 4;
   if (bgOffset <= -40) bgOffset = 0;
   for (let i = 0; i < canvas.width / 40 + 2; i++) {
     ctx.fillStyle = '#333';
-    ctx.fillRect(bgOffset + i * 40, canvas.height - 40, 40, 40);
+    ctx.fillRect(bgOffset + i * 40, canvas.height - 0, 40, 40);
   }
 
-  // draw enemy sprite (flash to white if hit)
-if (enemyFlashTimer > 0) {
-  // optional flash effect: tint white overlay
-  ctx.globalAlpha = 0.7;
-  ctx.drawImage(enemyImg, canvas.width - 80, canvas.height - 319, 275, 300);
-  ctx.globalAlpha = 1;
-} else {
-  ctx.drawImage(enemyImg, canvas.width - 250, canvas.height - 319, 265, 300);
-}
-
-  drawHealthBar(canvas.width - 140, canvas.height - 180, 100, 10, enemyHP, 'red', 'ENEMY');
-  if (enemyFlashTimer > 0) enemyFlashTimer--;
-
-// draw character sprite at player's position
-ctx.drawImage(characterImg, 20, canvas.height - 319, 255, 300);
-drawHealthBar(20, canvas.height - 180, 100, 10, playerHP, 'lime', 'YOU');
-  activeWords.forEach(word => {
-    word.update();
-    word.draw();
-  });
-  let loaded = 0;
-[bgImage, characterImg, enemyImg].forEach(img =>
-  img.onload = () => {
-    if (++loaded === 3) gameLoop();
+  // 3) enemy sprite + flash
+  if (enemyFlashTimer > 0) {
+    ctx.globalAlpha = 0.7;
+    ctx.drawImage(enemyImg, canvas.width - 250, canvas.height - 319, 265, 300);
+    ctx.globalAlpha = 1;
+    enemyFlashTimer--;
+  } else {
+    ctx.drawImage(enemyImg, canvas.width - 250, canvas.height - 319, 265, 300);
   }
-);
-  powerups.forEach(p => {
-    p.update();
-    p.draw();
-  });
+  drawHealthBar(
+    canvas.width - 140,
+    canvas.height - 180,
+    100, 10,
+    enemyHP, 'red', 'ENEMY'
+  );
+
+  // 4) player sprite + health
+  ctx.drawImage(characterImg, 20, canvas.height - 319, 255, 300);
+  drawHealthBar(20, canvas.height - 180, 100, 10, playerHP, 'lime', 'YOU');
+
+  // 5) words
+  activeWords.forEach(w => { w.update(); w.draw(); });
+
+  // 6) power-ups
+  powerups.forEach(p => { p.update(); p.draw(); });
   powerups = powerups.filter(p => !p.collected);
 
-  projectiles.forEach(p => {
-    p.update();
-    p.draw();
-  });
-  projectiles = projectiles.filter(p => p.x < canvas.width);
+  // 7) projectiles (slashes)
+  projectiles.forEach(p => { p.update(); p.draw(); });
+  projectiles = projectiles.filter(p => !p.hit && p.x < canvas.width);
 
+  // 8) UI
   updateWPM();
   requestAnimationFrame(gameLoop);
 }
@@ -319,51 +320,49 @@ document.getElementById('powerupInfoBtn').addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', e => {
-  if (gameOver) return;
-  const key = e.key;
-  if (!currentWord) {
-    for (let word of activeWords) {
-      if (word.text[0] === key) {
-        currentWord = word;
-        typedIndex = 1;
-        return;
-      }
-    }
-  } else {
-  if (currentWord.text[typedIndex] === key) {
-    typedIndex++;
-    const color = `hsl(${Math.random() * 360}, 100%, 50%)`;
-    projectiles.push(new Projectile(80, canvas.height - 130, color));
+      if (gameOver) return;
+      const key = e.key;
+      if (!currentWord) {
+        for (let w of activeWords) {
+          if (w.text[0] === key) {
+            currentWord = w;
+            typedIndex = 1;
+            return;
+          }
+        }
+      } else if (currentWord.text[typedIndex] === key) {
+        typedIndex++;
+        if (typedIndex >= currentWord.text.length) {
+          // word done
+          activeWords = activeWords.filter(w => w !== currentWord);
+          combo++; updateComboDisplay();
+          wordsTyped++;
+          score += 1 + combo - 1;
+          document.getElementById('score').innerText = score;
 
-    if (typedIndex >= currentWord.text.length) {
-      activeWords = activeWords.filter(w => w !== currentWord);
-      combo++;
-      updateComboDisplay();
-      wordsTyped++;
-      let points = 1 + combo - 1;
-      score += points;
-      document.getElementById('score').innerText = score;
-      
-      if (currentWord.isHealing) {
-        playerHP = Math.min(100, playerHP + 20);
+          if (currentWord.isHealing) {
+            playerHP = Math.min(100, playerHP + 20);
+          } else {
+            // SPAWN SLASH
+            projectiles.push(
+              new Projectile(
+                80,
+                canvas.height - 230,
+                slashImg,
+                255, 160,
+                10 + level
+              )
+            );
+          }
+
+          currentWord = null;
+          typedIndex   = 0;
+        }
       } else {
-        enemyHP -= 10 + level;
-        enemyFlashTimer = 5;
-        if (enemyHP <= 0) levelUp();
+        combo = 0; updateComboDisplay();
+        currentWord = null; typedIndex = 0;
       }
-
-      currentWord = null;
-      typedIndex = 0;
-    }
-  } else {
-    // ❌ Wrong key pressed!
-    combo = 0;
-    updateComboDisplay();
-    currentWord = null;
-    typedIndex = 0;
-  }
-}
-});
+    });
 gameLoop();
 </script>
 </body>
