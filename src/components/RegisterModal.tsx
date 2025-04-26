@@ -14,7 +14,7 @@ export const RegisterModal = ({ open, onOpenChange }: { open: boolean, onOpenCha
     e.preventDefault();
     if (playerName.trim()) {
       localStorage.setItem('playerName', playerName.trim());
-      navigate('/game');
+      navigate('/mode-select');
     }
   };
 

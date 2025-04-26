@@ -1,4 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import { useResponsive } from '@/hooks/use-responsive';
+import { Progress } from '@/components/ui/progress';
 
 export interface GameCanvasProps {
   onScoreChange: (score: number) => void;
@@ -16,6 +18,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   onComboChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { isPortrait } = useResponsive();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,11 +43,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     let combo = 0;
     let wordsTyped = 0;
     const startTime = Date.now();
-    let bgOffset = 0;
     let enemyFlashTimer = 0;
+    let isTyping = false;
 
     // Load assets
-    const bgImage = new Image(); bgImage.src = '/background.png';
     const characterImg = new Image(); characterImg.src = '/character.png';
     const enemyImg = new Image(); enemyImg.src = '/character2.png';
     const slashImg = new Image(); slashImg.src = '/slash.png';
@@ -64,19 +66,21 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         this.isHealing = isHealing;
       }
       draw() {
-        ctx.fillStyle = this.isHealing ? 'yellow' : 'white';
-        ctx.font = '26px monospace';
+        ctx.textAlign = 'left';
+        ctx.font = '26px MedievalSharp';
+        ctx.fillStyle = this.isHealing ? '#FFD700' : '#E2E8F0';
         ctx.fillText(this.text, this.x, this.y);
+        
         if (currentWord === this) {
-          ctx.fillStyle = this.isHealing ? '#ffff66' : 'cyan';
-          ctx.shadowColor = this.isHealing ? '#ffff66' : 'cyan';
-          ctx.shadowBlur = 10;
+          ctx.fillStyle = this.isHealing ? '#FFA500' : '#00CED1';
+          ctx.shadowColor = this.isHealing ? '#FFA500' : '#00CED1';
+          ctx.shadowBlur = 15;
           ctx.fillText(this.text.substring(0, typedIndex), this.x, this.y);
           ctx.shadowBlur = 0;
         }
       }
       update() {
-        this.x -= this.speed;
+        this.x -= isTyping ? this.speed * 0.5 : this.speed;
         if (this.x <= 80) {
           activeWords = activeWords.filter(w => w !== this);
           playerHP -= 10 + level;
@@ -96,7 +100,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       speed = 25;
       damage: number;
       hit = false;
-      hitFrames = 0; // NEW: extra frames after hit
+      hitFrames = 0;
     
       constructor(x: number, y: number, img: HTMLImageElement, w: number, h: number, damage: number) {
         this.x = x;
@@ -112,7 +116,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           this.x += this.speed;
           if (this.x >= canvas.width - 80) {
             this.hit = true;
-            this.hitFrames = 5; // show for 5 frames after hit
+            this.hitFrames = 5;
             enemyFlashTimer = 5;
             enemyHP -= this.damage;
             if (enemyHP <= 0) levelUp();
@@ -127,7 +131,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     }
     
-
     const spawnWord = () => {
       const words = ['fire','ice','storm','rune','portal','spell','magic','dark','light','burn','time','zap','chaos','nova'];
       const text = words[Math.floor(Math.random() * words.length)];
@@ -139,9 +142,38 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     };
 
     const drawHealthBar = (x: number, y: number, w: number, h: number, val: number, col: string, label: string) => {
-      ctx.fillStyle = 'gray'; ctx.fillRect(x, y, w, h);
-      ctx.fillStyle = col; ctx.fillRect(x, y, Math.max(0, val), h);
-      ctx.fillStyle = 'white'; ctx.font = '12px monospace'; ctx.fillText(label, x, y - 4);
+      const barHeight = 12;
+      const cornerRadius = 6;
+      
+      ctx.font = '14px MedievalSharp';
+      ctx.fillStyle = '#E2E8F0';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, x + w/2, y - 8);
+
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, barHeight, cornerRadius);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fill();
+      
+      const gradient = ctx.createLinearGradient(x, y, x + w, y);
+      if (col === 'lime') {
+        gradient.addColorStop(0, '#48BB78');
+        gradient.addColorStop(1, '#68D391');
+      } else {
+        gradient.addColorStop(0, '#F56565');
+        gradient.addColorStop(1, '#FC8181');
+      }
+      
+      ctx.beginPath();
+      ctx.roundRect(x, y, (w * val/100), barHeight, cornerRadius);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      const shine = ctx.createLinearGradient(x, y, x, y + barHeight);
+      shine.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+      shine.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = shine;
+      ctx.fill();
     };
 
     const updateWPM = () => {
@@ -167,21 +199,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     const gameLoop = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // background
-      if (bgImage.complete) {
-        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-      } else {
-        ctx.fillStyle = '#0f0f2f'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      // ground
-      bgOffset -= 4;
-      if (bgOffset <= -40) bgOffset = 0;
+      ctx.fillStyle = '#2A1810';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
       for (let i = 0; i < canvas.width / 40 + 2; i++) {
-        ctx.fillStyle = '#333'; ctx.fillRect(bgOffset + i * 40, canvas.height - 0, 40, 40);
+        ctx.fillStyle = '#333'; 
+        ctx.fillRect(i * 40, canvas.height - 0, 40, 40);
       }
 
-      // enemy
       if (enemyImg.complete) {
         if (enemyFlashTimer > 0) {
           ctx.globalAlpha = 0.7;
@@ -194,7 +219,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       }
       drawHealthBar(canvas.width - 140, canvas.height - 180, 100, 10, enemyHP, 'red', 'ENEMY');
 
-      // player
       if (characterImg.complete) ctx.drawImage(characterImg, 20, canvas.height - 319, 255, 300);
       drawHealthBar(20, canvas.height - 180, 100, 10, playerHP, 'lime', 'YOU');
 
@@ -211,9 +235,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key;
+      
+      if (key.length === 1 && /[a-zA-Z]/.test(key)) {
+        isTyping = true;
+      }
+      
       if (!currentWord) {
         for (const w of activeWords) {
-          if (w.text[0] === key) { currentWord = w; typedIndex = 1; return; }
+          if (w.text[0] === key) { 
+            currentWord = w; 
+            typedIndex = 1; 
+            return; 
+          }
         }
       } else if (currentWord.text[typedIndex] === key) {
         typedIndex++;
@@ -228,6 +261,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           else projectiles.push(new Projectile(80, canvas.height - 230, slashImg, 255, 160, 10 + level));
           currentWord = null;
           typedIndex = 0;
+          
+          setTimeout(() => {
+            isTyping = false;
+          }, 500);
         }
       } else {
         combo = 0;
@@ -244,7 +281,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     };
     window.addEventListener('resize', handleResize);
 
-    // Cleanup
     return () => {
       cancelAnimationFrame(frameId);
       clearInterval(spawnInterval);
