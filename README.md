@@ -1,6 +1,6 @@
 # Welcome to you my project
 
-## Project info
+## Project info :
 
 
 

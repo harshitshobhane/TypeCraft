@@ -8,7 +8,7 @@ export const AncientBackground = () => {
       <div 
         className="absolute inset-0 bg-[#2A1810] opacity-90"
         style={{
-          backgroundImage: `url('/background.png')`,
+          backgroundImage: `url('background.png')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
