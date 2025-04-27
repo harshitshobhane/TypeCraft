@@ -1,13 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GameCanvas } from '@/components/game/GameCanvas';
 import { GameUI } from '@/components/game/GameUI';
-import { ComboDisplay } from '@/components/game/ComboDisplay';
 import { GameOver } from '@/components/game/GameOver';
 import { ModeIndicator } from '@/components/game/ModeIndicator';
 import { AncientBackground } from '@/components/game/AncientBackground';
 import { TimeAttackMode } from '@/components/game/TimeAttackMode';
+import { TimeGardenMode } from '@/components/game/TimeGardenMode';
 import { toast } from '@/hooks/use-toast';
 
 const Game = () => {
@@ -62,33 +61,46 @@ const Game = () => {
     navigate('/mode-select');
   };
 
-  return (
-    <div className={`relative min-h-screen transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-      <AncientBackground />
-      
-      {!isGameOver ? (
-        <>
-          {gameMode === 'timeattack' ? (
-            <TimeAttackMode
+  // Render different game modes
+  const renderGameMode = () => {
+    switch (gameMode) {
+      case 'timeattack':
+        return (
+          <TimeAttackMode
+            onScoreChange={setScore}
+            onWpmChange={setWpm}
+            onGameOver={handleGameOver}
+          />
+        );
+      case 'zen':
+        return (
+          <TimeGardenMode
+            onScoreChange={setScore}
+            onWpmChange={setWpm}
+            onGameOver={handleGameOver}
+          />
+        );
+      default: // combat mode and others
+        return (
+          <>
+            <AncientBackground />
+            <GameCanvas 
               onScoreChange={setScore}
+              onLevelChange={setLevel}
               onWpmChange={setWpm}
               onGameOver={handleGameOver}
+              onComboChange={setCombo}
             />
-          ) : (
-            <>
-              <GameCanvas 
-                onScoreChange={setScore}
-                onLevelChange={setLevel}
-                onWpmChange={setWpm}
-                onGameOver={handleGameOver}
-                onComboChange={setCombo}
-              />
-              <GameUI score={score} level={level} wpm={wpm} />
-              <ComboDisplay combo={combo} />
-            </>
-          )}
-          <ModeIndicator mode={gameMode} />
-        </>
+            <GameUI score={score} level={level} wpm={wpm} />
+          </>
+        );
+    }
+  };
+
+  return (
+    <div className={`relative min-h-screen transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+      {!isGameOver ? (
+        renderGameMode()
       ) : (
         <GameOver 
           score={score}
