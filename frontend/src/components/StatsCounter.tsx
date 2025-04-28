@@ -10,13 +10,13 @@ interface Stat {
 
 export const StatsCounter = () => {
   const [animatedStats, setAnimatedStats] = useState<Stat[]>([
-    { value: 0, label: 'Modes Unlocked', icon: <Shuffle className="w-6 h-6" />, suffix: '' },
-    { value: 0, label: 'Epic Power-Ups', icon: <Zap className="w-6 h-6" />, suffix: '+' },
-    { value: 0, label: 'Global Rivals', icon: <Trophy className="w-6 h-6" />, suffix: '+' }
+    { value: 0, label: 'Game Modes', icon: <Shuffle className="w-6 h-6" />, suffix: '' },
+    { value: 0, label: 'Power-Ups', icon: <Zap className="w-6 h-6" />, suffix: '+' },
+    { value: 0, label: 'Leaderboard Spots', icon: <Trophy className="w-6 h-6" />, suffix: '+' }
   ]);
 
   useEffect(() => {
-    const targetStats = [3, 7, 100];
+    const targetStats = [10, 24, 3];
     const duration = 2000;
     const steps = 60;
     const interval = duration / steps;

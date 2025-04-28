@@ -30,8 +30,8 @@ const Index = () => {
 
     window.addEventListener("mousemove", handleMouseMove);
     
-    // Simulate loading
-    const timer = setTimeout(() => setIsLoaded(true), 500);
+    // Increase loading time to ensure assets are ready
+    const timer = setTimeout(() => setIsLoaded(true), 1000);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
@@ -44,27 +44,32 @@ const Index = () => {
   };
 
   return (
-    <div className={`min-h-screen w-full bg-background overflow-hidden transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+    <div 
+      className={`min-h-screen w-full bg-background overflow-hidden transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+      role="main"
+      aria-label="Typing Craft Game Homepage"
+    >
       <LanguageSelector />
       
-      <div className="absolute inset-0 bg-radial-gradient"></div>
-      <div className="absolute inset-0 bg-cyber-grid bg-grid"></div>
+      <div className="absolute inset-0 bg-radial-gradient" aria-hidden="true"></div>
+      <div className="absolute inset-0 bg-cyber-grid bg-grid" aria-hidden="true"></div>
       
       {/* Hero Section */}
       <section className="relative container mx-auto px-4 pt-20 pb-20 md:pb-32 text-center">
         <div className="relative z-10" style={parallaxStyle}>
-          <h1 className="orbitron text-6xl md:text-7xl lg:text-8xl font-bold mb-6 text-glow-intense bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+          <h1 className="orbitron text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 text-glow-intense bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
             Typing Craft
           </h1>
-          <div className="exo text-xl md:text-2xl mb-8 text-foreground/80 max-w-2xl mx-auto typing-cursor">
+          <div className="exo text-lg sm:text-xl md:text-2xl mb-8 text-foreground/80 max-w-2xl mx-auto typing-cursor">
             Master the art of combat through typing in this thrilling time-travel shooter
           </div>
           <Button 
             size="lg" 
             className="orbitron text-lg px-10 py-7 bg-primary hover:bg-primary/90 text-primary-foreground animate-float neon-border-intense"
             onClick={() => setShowRegisterModal(true)}
+            aria-label="Join the battle and start playing"
           >
-            <Trophy className="w-5 h-5 mr-2" />
+            <Trophy className="w-5 h-5 mr-2" aria-hidden="true" />
             Join The Battle
           </Button>
         </div>

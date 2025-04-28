@@ -4,21 +4,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const achievements = [
   {
     id: 1,
-    name: "Streak King",
-    description: "Maintain a win streak for 5 games",
-    icon: "🏆",
+    name: "AI Challenger",
+    description: "Defeat the adaptive AI",
+    icon: "🤖",
   },
   {
     id: 2,
-    name: "Zen Master",
-    description: "Complete a session in Zen Mode without mistakes",
-    icon: "🧘",
+    name: "Mode Explorer",
+    description: "Play all game modes",
+    icon: "🧭",
   },
   {
     id: 3,
-    name: "Lightning Typer",
-    description: "Reach 150 WPM in any mode",
-    icon: "⚡",
+    name: "Power-Up Pro",
+    description: "Use every power-up",
+    icon: "💥",
   },
 ];
 
