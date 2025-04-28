@@ -1,0 +1,194 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Exo+2:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 232 75% 5%;
+    --foreground: 210 40% 98%;
+    
+    --card: 232 75% 5%;
+    --card-foreground: 210 40% 98%;
+    
+    --primary: 252 100% 69%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 217 100% 61%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --accent: 316 100% 55%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 232 25% 30%;
+    --input: 232 25% 30%;
+    --ring: 232 25% 30%;
+    
+    --radius: 0.5rem;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .orbitron {
+    font-family: 'Orbitron', sans-serif;
+  }
+  
+  .exo {
+    font-family: 'Exo 2', sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px rgb(var(--primary) / 0.5);
+  }
+  
+  .text-glow-intense {
+    text-shadow: 0 0 10px rgb(var(--primary) / 0.7),
+                 0 0 20px rgb(var(--primary) / 0.5),
+                 0 0 30px rgb(var(--primary) / 0.3);
+  }
+  
+  .neon-border {
+    box-shadow: 0 0 15px rgb(var(--primary) / 0.3);
+  }
+  
+  .neon-border-intense {
+    box-shadow: 0 0 15px rgb(var(--primary) / 0.5),
+                inset 0 0 10px rgb(var(--primary) / 0.2);
+  }
+  
+  .premium-gradient {
+    background: linear-gradient(135deg, 
+      rgba(155, 135, 245, 0.2) 0%, 
+      rgba(155, 135, 245, 0.1) 50%,
+      rgba(212, 70, 239, 0.2) 100%);
+  }
+  
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(10, 10, 18, 0.6);
+    border: 1px solid rgba(155, 135, 245, 0.2);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 10px rgb(var(--primary) / 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgb(var(--primary) / 0.6);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.keyboard-key {
+  position: relative;
+  background-color: #1A1F2C;
+  border-radius: 4px;
+  color: #fff;
+  box-shadow: 0 2px 0 #000;
+}
+
+.keyboard-key::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(to right, 
+    rgb(var(--primary) / 0.6) 0%,
+    rgb(var(--accent) / 0.6) 100%);
+  border-radius: 0 0 4px 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.keyboard-key:hover::after {
+  opacity: 1;
+}
+
+.tech-scanline {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 2px;
+  background-color: rgb(var(--primary));
+  opacity: 0.6;
+  box-shadow: 0 0 10px rgb(var(--primary));
+  animation: scanline 4s linear infinite;
+}
+
+@keyframes scanline {
+  0% { 
+    top: 0%; 
+    opacity: 0.1;
+  }
+  50% { 
+    opacity: 0.6;
+  }
+  100% { 
+    top: 100%;
+    opacity: 0.1;
+  }
+}
+
+.parallax-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  transition: transform 0.1s ease;
+}
+
+.animated-bg {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%238b5cf6' stroke-opacity='0.05'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
+  background-size: 32px 32px;
+  background-position: center center;
+  animation: bg-slide 20s linear infinite;
+}
+
+@keyframes bg-slide {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}
+
+.typing-cursor::after {
+  content: '|';
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
