@@ -1,25 +1,24 @@
-
 import { Badge } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const achievements = [
   {
     id: 1,
-    name: "Speed Demon",
-    description: "Type faster than light",
-    icon: "🏃",
+    name: "Boss Slayer",
+    description: "Defeat your first boss enemy.",
+    icon: "🐉",
   },
   {
     id: 2,
-    name: "Combo Master",
-    description: "Achieve a 10x combo",
-    icon: "⚡",
+    name: "Combo Conqueror",
+    description: "Achieve a 20x combo streak.",
+    icon: "🔥",
   },
   {
     id: 3,
-    name: "Time Traveler",
-    description: "Complete all time periods",
-    icon: "🕒",
+    name: "World Champion",
+    description: "Reach the top 10 on the global leaderboard.",
+    icon: "🌎",
   },
 ];
 
